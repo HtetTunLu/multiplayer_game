@@ -28,37 +28,45 @@ function create() {
   var self = this;
   this.socket = io();
   this.otherPlayers = this.physics.add.group();
+  this.otherNames = this.physics.add.group();
   this.socket.on("currentPlayers", function (players) {
-    console.log(players);
     Object.keys(players).forEach(function (id) {
       if (players[id].playerId === self.socket.id) {
         addPlayer(self, players[id]);
-        addName(self, players[id]);
+        addPlayername(self, players[id]);
       } else {
         addOtherPlayers(self, players[id]);
-        addName(self, players[id]);
+        addotherplayerNmaes(self, players[id]);
       }
     });
   });
   this.socket.on("newPlayer", function (playerInfo) {
     addOtherPlayers(self, playerInfo);
-    addName(self, players[id]);
+    addotherplayerNmaes(self, playerInfo);
   });
   this.socket.on("diconnectPlayer", function (playerId) {
     self.otherPlayers.getChildren().forEach(function (otherPlayer) {
       if (playerId === otherPlayer.playerId) {
         otherPlayer.destroy();
-        addName(self, players[id]).destroy()
+      }
+    });
+    self.otherNames.getChildren().forEach(function (otherName) {
+      if (playerId === otherName.playerId) {
+        otherName.destroy();
       }
     });
   });
   this.cursors = this.input.keyboard.createCursorKeys();
   this.socket.on("playerMoved", function (playerInfo) {
-    console.log(self.otherPlayers)
     self.otherPlayers.getChildren().forEach(function (otherPlayer) {
       if (playerInfo.playerId === otherPlayer.playerId) {
         otherPlayer.setRotation(playerInfo.rotation);
         otherPlayer.setPosition(playerInfo.x, playerInfo.y);
+      }
+    });
+    self.otherNames.getChildren().forEach(function (otherName) {
+      if (playerInfo.playerId === otherName.playerId) {
+        otherName.setPosition(playerInfo.name_x, playerInfo.name_y);
       }
     });
   });
@@ -123,15 +131,23 @@ function update() {
       this.socket.emit("playerMovement", {
         x: this.ship.x,
         y: this.ship.y,
+        name_x: this.ship.x - 23,
+        name_y: this.ship.y - 50,
         rotation: this.ship.rotation,
       });
+      this.name.x = this.ship.x - 23;
+      this.name.y = this.ship.y - 50;
     }
     // save old position data
     this.ship.oldPosition = {
       x: this.ship.x,
       y: this.ship.y,
+      name_x: this.ship.x - 23,
+      name_y: this.ship.y - 50,
       rotation: this.ship.rotation,
     };
+    this.name.x = this.ship.x - 23;
+    this.name.y = this.ship.y - 50;
   }
 }
 
@@ -149,6 +165,14 @@ function addPlayer(self, playerInfo) {
   self.ship.setAngularDrag(100);
   self.ship.setMaxVelocity(200);
 }
+function addPlayername(self, playerInfo) {
+  self.name = self.add.text(
+    playerInfo.name_x,
+    playerInfo.name_y,
+    playerInfo.name,
+    { fontSize: "20px" }
+  );
+}
 
 function addOtherPlayers(self, playerInfo) {
   const otherPlayer = self.add
@@ -164,9 +188,13 @@ function addOtherPlayers(self, playerInfo) {
   self.otherPlayers.add(otherPlayer);
 }
 
-function addName(self, playerInfo) {
-  self.add.text(playerInfo.x - 23, playerInfo.y - 50, playerInfo.name, {
-    fontSize: "20px",
-    fill: playerInfo.team === "red" ? "#FF0000" : "#0000FF",
-  });
+function addotherplayerNmaes(self, playerInfo) {
+  const otherName = self.add.text(
+    playerInfo.name_x,
+    playerInfo.name_y,
+    playerInfo.name,
+    { fontSize: "20px" }
+  );
+  otherName.playerId = playerInfo.playerId;
+  self.otherNames.add(otherName);
 }

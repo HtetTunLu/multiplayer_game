@@ -28,8 +28,10 @@ io.on("connection", function (socket) {
     y: Math.floor(Math.random() * 500) + 50,
     playerId: socket.id,
     team: Math.floor(Math.random() * 2) == 0 ? "red" : "blue",
-    name: "Jhon"
+    name: "Jhon",
   };
+  players[socket.id].name_x = players[socket.id].x - 23;
+  players[socket.id].name_y = players[socket.id].y - 50;
   // send the players object to the new player
   socket.emit("currentPlayers", players);
   // send the star object to the new player
@@ -48,6 +50,8 @@ io.on("connection", function (socket) {
   socket.on("playerMovement", function (movementData) {
     players[socket.id].x = movementData.x;
     players[socket.id].y = movementData.y;
+    players[socket.id].name_x = movementData.name_x;
+    players[socket.id].name_y = movementData.name_y;
     players[socket.id].rotation = movementData.rotation;
     // emit a message to all players about the player that moved
     socket.broadcast.emit("playerMoved", players[socket.id]);
