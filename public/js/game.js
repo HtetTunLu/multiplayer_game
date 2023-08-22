@@ -18,22 +18,48 @@ var config = {
     update: update,
   },
 };
+
+// window.addEventListener("load", () => {
+
+// });
+
 var game = new Phaser.Game(config);
+let player = null;
+let flg = false;
 function preload() {
   this.load.image("ship", "assets/spaceShips_001.png");
   this.load.image("otherPlayer", "assets/enemyBlack5.png");
   this.load.image("star", "assets/star_gold.png");
 }
 function create() {
+  const modal = document.querySelector(".modal");
+  const overlay = document.querySelector(".overlay");
+  const nameForm = document.getElementById("name-form");
+  const name = document.getElementById("name");
+
+  modal.classList.remove("hidden");
+  overlay.classList.remove("hidden");
+
   var self = this;
   this.socket = io();
   this.otherPlayers = this.physics.add.group();
   this.otherNames = this.physics.add.group();
+  nameForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (name.value) {
+      modal.classList.add("hidden");
+      overlay.classList.add("hidden");
+      player.name = name.value;
+      console.log(player);
+      addPlayername(self, player);
+      flg = false;
+    }
+  });
   this.socket.on("currentPlayers", function (players) {
     Object.keys(players).forEach(function (id) {
       if (players[id].playerId === self.socket.id) {
         addPlayer(self, players[id]);
-        addPlayername(self, players[id]);
+        player = players[id];
       } else {
         addOtherPlayers(self, players[id]);
         addotherplayerNmaes(self, players[id]);
@@ -41,6 +67,7 @@ function create() {
     });
   });
   this.socket.on("newPlayer", function (playerInfo) {
+    console.log(playerInfo);
     addOtherPlayers(self, playerInfo);
     addotherplayerNmaes(self, playerInfo);
   });
@@ -99,6 +126,12 @@ function create() {
 }
 function update() {
   if (this.ship) {
+    if (!flg) {
+      this.socket.emit("hello", player);
+      this.socket.on("done", function (flag) {
+        flg = flag;
+      });
+    }
     if (this.cursors.left.isDown) {
       this.ship.setAngularVelocity(-150);
     } else if (this.cursors.right.isDown) {
@@ -146,8 +179,10 @@ function update() {
       name_y: this.ship.y - 50,
       rotation: this.ship.rotation,
     };
-    this.name.x = this.ship.x - 23;
-    this.name.y = this.ship.y - 50;
+    if (this.name) {
+      this.name.x = this.ship.x - 23;
+      this.name.y = this.ship.y - 50;
+    }
   }
 }
 

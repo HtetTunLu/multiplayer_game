@@ -28,10 +28,17 @@ io.on("connection", function (socket) {
     y: Math.floor(Math.random() * 500) + 50,
     playerId: socket.id,
     team: Math.floor(Math.random() * 2) == 0 ? "red" : "blue",
-    name: "Jhon",
+    name: "",
   };
   players[socket.id].name_x = players[socket.id].x - 23;
   players[socket.id].name_y = players[socket.id].y - 50;
+
+  socket.on("hello", function (player) {
+    players[socket.id].name = player.name;
+    // update all other players of the new player
+    socket.broadcast.emit("newPlayer", players[socket.id]);
+    socket.emit('done', true) 
+  });
   // send the players object to the new player
   socket.emit("currentPlayers", players);
   // send the star object to the new player
